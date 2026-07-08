@@ -1,4 +1,5 @@
 export type UserRole = 'admin' | 'storekeeper' | 'manager' | 'user';
+export type FieldType = 'text' | 'number' | 'status' | 'block' | 'department' | 'date' | 'currency' | 'checkbox';
 
 export interface User {
   uid: string;
@@ -8,6 +9,17 @@ export interface User {
   createdAt: number;
 }
 
+export interface Theme {
+  mode: 'light' | 'dark';
+  primary: string;
+  primaryContainer: string;
+  secondaryContainer: string;
+  tertiary: string;
+  background: string;
+  surface: string;
+  blockAccent: string;
+}
+
 export interface Column {
   id: string;
   name: string;
@@ -15,9 +27,14 @@ export interface Column {
   order: number;
 }
 
+export interface Cell {
+  value: any;
+  updatedAt?: number;
+}
+
 export interface Row {
   id: string;
-  cells: Record<string, any>;
+  cells: Record<string, Cell>;
   createdAt: number;
   updatedAt: number;
 }
@@ -27,6 +44,8 @@ export interface Block {
   title: string;
   columns: Column[];
   rows: Row[];
+  statusField?: string;
+  statusSort?: string;
 }
 
 export interface Page {
@@ -56,16 +75,3 @@ export interface Workspace {
   createdAt: number;
   updatedAt: number;
 }
-
-export interface Theme {
-  mode: 'light' | 'dark';
-  primary: string;
-  primaryContainer: string;
-  secondaryContainer: string;
-  tertiary: string;
-  background: string;
-  surface: string;
-  blockAccent: string;
-}
-
-export type FieldType = 'text' | 'number' | 'status' | 'block' | 'department' | 'date' | 'currency' | 'checkbox';

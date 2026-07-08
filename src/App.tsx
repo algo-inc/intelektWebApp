@@ -71,12 +71,8 @@ function AppContent() {
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <AppRail userEmail={user.email} onLogout={handleLogout} />
       <Box sx={{ flex: 1, p: 2, overflow: 'auto', backgroundColor: '#f5f5f5' }}>
-        {workspace && workspace.pages[0].blocks[0] && (
-          <WorkspaceTable
-            block={workspace.pages[0].blocks[0]}
-            onAddRow={() => console.log('Add row')}
-            onAddColumn={() => console.log('Add column')}
-          />
+        {workspace && workspace.pages[0]?.blocks[0] && (
+          <WorkspaceTable block={workspace.pages[0].blocks[0]} />
         )}
       </Box>
     </Box>
