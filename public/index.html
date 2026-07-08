@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#1d1b20">
+    <title>Intelekt | Облік майна</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./md3.css">
+  </head>
+  <body>
+    <main id="app">
+      <section class="auth-view md3-auth" id="authView">
+        <div class="brand-panel md3-hero">
+          <div class="brand-mark md3-brand-mark">IW</div>
+          <h1>Облік майна</h1>
+          <p>Робочий простір для таблиць, полів, блоків, статусів і структурованого обліку майна.</p>
+        </div>
+
+        <form class="login-panel md3-card md3-elevation-1" id="loginPanel">
+          <h2>Вхід до системи</h2>
+          <p id="authModeText">Підключіть Firebase або скористайтеся локальним demo mode.</p>
+          <div class="auth-fields">
+            <label>
+              Email
+              <input id="emailInput" name="email" type="email" autocomplete="email" placeholder="name@example.com">
+            </label>
+            <label>
+              Пароль
+              <input id="passwordInput" name="password" type="password" autocomplete="current-password" placeholder="Ваш пароль">
+            </label>
+          </div>
+          <div class="auth-actions-grid">
+            <button class="button primary md3-button md3-button-filled" type="button" id="emailLogin">Увійти</button>
+            <button class="button ghost md3-button md3-button-tonal" type="button" id="passwordReset">Відновити пароль</button>
+          </div>
+          <button class="button primary md3-button md3-button-filled" type="button" id="googleLogin">Увійти через Google</button>
+          <div class="auth-security-row">
+            <button class="button ghost md3-button md3-button-tonal" type="button" id="pinLogin">PIN-код</button>
+            <button class="button ghost md3-button md3-button-tonal" type="button" id="biometricLogin">Біометрія</button>
+          </div>
+          <button class="button ghost md3-button md3-button-tonal" type="button" id="demoAdminLogin">Demo admin</button>
+          <button class="button text md3-button md3-button-text" type="button" id="demoUserLogin">Demo user</button>
+        </form>
+      </section>
+
+      <section class="workspace hidden md3-adaptive-layout" id="workspace">
+        <aside class="app-rail md3-navigation-rail">
+          <div class="rail-logo md3-brand-mark">IW</div>
+          <button class="rail-item active md3-nav-rail-item" type="button" title="Таблиці" data-open-tables>▦</button>
+          <button class="rail-item md3-nav-rail-item nav-with-badge" type="button" title="Передача майна" data-open-transfers>⇄<span class="nav-badge hidden" data-transfer-count></span></button>
+          <button class="rail-item md3-nav-rail-item" type="button" title="Підрозділи" data-open-departments>⌂</button>
+          <button class="rail-item md3-nav-rail-item" type="button" title="Налаштування" data-open-settings>⚙</button>
+          <div class="rail-user">
+            <button class="rail-avatar" type="button" id="userName" title="Користувач">К</button>
+            <span id="userRole">user</span>
+            <button class="rail-item logout md3-nav-rail-item" type="button" id="logoutButton" title="Вийти">⎋</button>
+          </div>
+        </aside>
+
+        <aside class="sidebar md3-navigation-drawer">
+          <div class="workspace-switcher">
+            <strong id="workspaceName">Intelekt Workspace</strong>
+            <button class="mini-button md3-icon-button" type="button" id="sidebarSettingsButton" title="Налаштування">⚙</button>
+          </div>
+
+          <section class="sidebar-section grow">
+            <div class="section-header">
+              <span>Таблиці</span>
+              <button class="mini-button md3-icon-button" type="button" id="addPageButton" title="Створити таблицю">＋</button>
+            </div>
+            <div class="pages-list md3-list" id="pagesList"></div>
+          </section>
+
+          <section class="sidebar-section departments-sidebar-section">
+            <div class="section-header">
+              <span>Підрозділи</span>
+              <button class="mini-button md3-icon-button" type="button" id="addDepartmentNavButton" title="Створити підрозділ">＋</button>
+            </div>
+            <div class="departments-nav-list md3-list" id="departmentsNavList"></div>
+          </section>
+
+          <section class="sidebar-section">
+            <div class="section-header">
+              <span>Операції</span>
+            </div>
+            <button class="sidebar-link md3-list-item nav-with-badge" type="button" data-open-transfers>⇄ Передача майна<span class="nav-badge hidden" data-transfer-count></span></button>
+          </section>
+        </aside>
+
+        <section class="content md3-content">
+          <header class="top-strip md3-top-app-bar">
+            <div class="crumbs" id="crumbs">Workspace / Page</div>
+            <label class="md3-search-bar" for="searchInput">
+              <span>⌕</span>
+              <input id="searchInput" type="search" placeholder="Пошук у таблиці">
+            </label>
+            <div class="top-actions">
+              <span id="modeBadge">Локальний режим</span>
+              <button class="button ghost compact md3-button md3-button-tonal" type="button" id="settingsButton">Налаштування</button>
+              <button class="button primary compact md3-button md3-button-filled" type="button" id="addBlockButton">＋ Блок таблиці</button>
+            </div>
+          </header>
+
+          <section class="page-view md3-pane" id="pageView">
+            <header class="page-header">
+              <div>
+                <div class="page-kicker" id="pageKicker">Таблиця</div>
+                <h1 id="pageTitle">Облік майна</h1>
+              </div>
+              <div class="page-header-actions">
+                <button class="button ghost compact md3-button md3-button-tonal" type="button" id="statsToggleButton">Сховати показники</button>
+                <div class="view-tabs md3-navigation-bar" id="pageTabs"></div>
+              </div>
+            </header>
+
+            <section class="stats-grid" id="statsGrid"></section>
+            <section class="blocks-list" id="blocksList"></section>
+          </section>
+
+          <section class="settings-view md3-pane hidden" id="settingsView">
+            <header class="page-header compact-header">
+              <div>
+                <div class="page-kicker">Адміністрування</div>
+                <h1>Налаштування</h1>
+              </div>
+            </header>
+
+            <section class="settings-grid">
+              <article class="settings-panel md3-card" id="themePanel">
+                <div class="settings-panel-header">
+                  <h3>Тема інтерфейсу</h3>
+                  <button class="button text compact md3-button md3-button-text" type="button" id="resetThemeButton">Скинути</button>
+                </div>
+                <div class="theme-settings-grid" id="themeSettings"></div>
+              </article>
+              <article class="settings-panel admin-only md3-card" id="adminPanel">
+                <h3>Ролі користувачів</h3>
+                <div id="usersList" class="users-list"></div>
+              </article>
+            </section>
+          </section>
+
+          <section class="departments-view md3-pane hidden" id="departmentsView">
+            <header class="page-header compact-header">
+              <div>
+                <div class="page-kicker">Облік майна</div>
+                <h1>Підрозділи</h1>
+              </div>
+              <button class="button primary compact md3-button md3-button-filled" type="button" id="addDepartmentButton">＋ Підрозділ</button>
+            </header>
+            <section class="departments-list" id="departmentsList"></section>
+          </section>
+
+          <section class="department-detail-view md3-pane hidden" id="departmentDetailView">
+            <header class="page-header compact-header">
+              <div>
+                <div class="page-kicker">Майно підрозділу</div>
+                <h1 id="departmentDetailTitle">Підрозділ</h1>
+              </div>
+            </header>
+            <section class="department-detail-list" id="departmentDetailList"></section>
+          </section>
+
+          <section class="transfers-view md3-pane hidden" id="transfersView">
+            <header class="page-header compact-header">
+              <div>
+                <div class="page-kicker">Операції з майном</div>
+                <h1>Передача майна</h1>
+              </div>
+            </header>
+            <section class="transfers-list" id="transfersList"></section>
+          </section>
+        </section>
+
+        <nav class="md3-bottom-navigation" aria-label="Основна навігація">
+          <button type="button" class="active" data-open-tables>▦<span>Таблиці</span></button>
+          <button type="button" class="nav-with-badge" data-open-transfers>⇄<span>Передача</span><span class="nav-badge hidden" data-transfer-count></span></button>
+          <button type="button" data-open-departments>⌂<span>Підрозділи</span></button>
+          <button type="button" data-open-settings>⚙<span>Налаштування</span></button>
+        </nav>
+
+        <button class="md3-fab" type="button" id="quickAddBlockButton" title="Додати блок">＋</button>
+      </section>
+    </main>
+
+    <dialog id="pageDialog" class="md3-dialog">
+      <form method="dialog" class="dialog-form" id="pageForm">
+        <h3>Нова таблиця</h3>
+        <label>
+          Назва таблиці
+          <input name="name" required maxlength="50" placeholder="Наприклад: Склад техніки">
+        </label>
+        <div class="dialog-actions">
+          <button class="button ghost md3-button md3-button-tonal" type="button" data-close-dialog="pageDialog">Скасувати</button>
+          <button class="button primary md3-button md3-button-filled" type="submit">Створити</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="blockDialog" class="md3-dialog">
+      <form method="dialog" class="dialog-form" id="blockForm">
+        <h3>Новий блок таблиці</h3>
+        <label>
+          Назва блоку
+          <input name="title" required maxlength="60" placeholder="Наприклад: Ноутбуки">
+        </label>
+        <label>
+          Бейдж
+          <input name="badge" maxlength="28" placeholder="Наприклад: На складі">
+        </label>
+        <label>
+          Статус сортування
+          <input name="filterStatus" maxlength="40" placeholder="Наприклад: Ремонт">
+        </label>
+        <label>
+          Наслідувати структуру
+          <select name="templateBlockId" id="blockTemplateSelect">
+            <option value="">Порожній блок</option>
+          </select>
+        </label>
+        <label>
+          Колір
+          <input name="color" type="color" value="#7c5cff">
+        </label>
+        <div class="dialog-actions">
+          <button class="button ghost md3-button md3-button-tonal" type="button" data-close-dialog="blockDialog">Скасувати</button>
+          <button class="button primary md3-button md3-button-filled" type="submit">Додати</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="columnDialog" class="md3-dialog">
+      <form method="dialog" class="dialog-form" id="columnForm">
+        <h3>Нове поле</h3>
+        <input type="hidden" name="blockId" id="columnBlockId">
+        <label>
+          Назва поля
+          <input name="label" required maxlength="40" placeholder="Наприклад: Серійний номер">
+        </label>
+        <label>
+          Тип поля
+          <select name="type">
+            <option value="text">Текст</option>
+            <option value="number">Число</option>
+            <option value="status">Блок / статус</option>
+            <option value="block">Перемістити в блок</option>
+            <option value="date">Дата</option>
+            <option value="currency">Валюта</option>
+            <option value="checkbox">Так/Ні</option>
+          </select>
+        </label>
+        <div class="dialog-actions">
+          <button class="button ghost md3-button md3-button-tonal" type="button" data-close-dialog="columnDialog">Скасувати</button>
+          <button class="button primary md3-button md3-button-filled" type="submit">Додати</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="rowDialog" class="md3-dialog">
+      <form method="dialog" class="dialog-form wide" id="rowForm">
+        <h3>Новий рядок</h3>
+        <input type="hidden" name="blockId" id="rowBlockId">
+        <div id="rowFields" class="row-fields"></div>
+        <div class="dialog-actions">
+          <button class="button ghost md3-button md3-button-tonal" type="button" data-close-dialog="rowDialog">Скасувати</button>
+          <button class="button primary md3-button md3-button-filled" type="submit">Створити</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="departmentDialog" class="md3-dialog">
+      <form method="dialog" class="dialog-form" id="departmentForm">
+        <h3>Новий підрозділ</h3>
+        <label>
+          Назва підрозділу
+          <input name="name" required maxlength="80" placeholder="Наприклад: Склад БПЛА">
+        </label>
+        <label>
+          Відповідальний
+          <select name="responsibleUid" id="departmentResponsibleSelect">
+            <option value="">Не призначено</option>
+          </select>
+        </label>
+        <div class="dialog-actions">
+          <button class="button ghost md3-button md3-button-tonal" type="button" data-close-dialog="departmentDialog">Скасувати</button>
+          <button class="button primary md3-button md3-button-filled" type="submit">Створити</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="bulkTransferDialog" class="md3-dialog">
+      <form method="dialog" class="dialog-form wide" id="bulkTransferForm">
+        <h3>Передати майно</h3>
+        <label>
+          Підрозділ отримувач
+          <select id="bulkTransferDepartment" name="departmentId" required></select>
+        </label>
+        <div class="bulk-transfer-items" id="bulkTransferItems"></div>
+        <div class="dialog-actions">
+          <button class="button ghost md3-button md3-button-tonal" type="button" data-close-dialog="bulkTransferDialog">Скасувати</button>
+          <button class="button primary md3-button md3-button-filled" type="submit">Створити передачу</button>
+        </div>
+      </form>
+    </dialog>
+
+    <section class="md3-bottom-sheet" id="bottomSheet" aria-hidden="true">
+      <div class="md3-bottom-sheet-handle"></div>
+      <div id="bottomSheetContent"></div>
+    </section>
+
+    <div class="md3-snackbar" id="snackbar" role="status" aria-live="polite"></div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

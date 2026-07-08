@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : 'user';
+    }
+
+    function isAdmin() {
+      return role() == 'admin';
+    }
+
+    function isStorekeeper() {
+      return role() == 'storekeeper';
+    }
+
+    function isManager() {
+      return role() == 'manager';
+    }
+
+    function canWriteAssets() {
+      return isAdmin() || isStorekeeper();
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.role == 'user';
+      allow update, delete: if isAdmin();
+    }
+
+    match /workspaces/{workspaceId} {
+      allow read: if signedIn();
+      allow write: if canWriteAssets();
+
+      match /sheets/{sheetId} {
+        allow read: if signedIn();
+        allow write: if canWriteAssets();
+      }
+    }
+  }
+}
