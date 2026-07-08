@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, AppBar, Toolbar, Typography, Button, Menu, MenuItem } from '@mui/material';
-import { signOut } from '../services/auth';
+import { signOut } from '../../services/auth';
 
 interface AppRailProps {
   userEmail?: string;

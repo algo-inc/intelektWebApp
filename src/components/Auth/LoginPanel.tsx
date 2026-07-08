@@ -9,7 +9,7 @@ import {
   Stack,
   Alert,
 } from '@mui/material';
-import { signInWithEmail, signInWithGoogle, signUpWithEmail } from '../services/auth';
+import { signInWithEmail, signInWithGoogle, signUpWithEmail } from '../../services/auth';
 
 interface LoginPanelProps {
   onLoginSuccess: (user: any) => void;
