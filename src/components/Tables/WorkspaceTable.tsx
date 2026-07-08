@@ -25,6 +25,8 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 import { Block, Row, Column } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 import { FIELD_TYPES } from '../../constants';
@@ -44,6 +46,9 @@ export function WorkspaceTable({ block }: WorkspaceTableProps) {
   const [newRowData, setNewRowData] = useState<Record<string, any>>({});
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnType, setNewColumnType] = useState('text');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusField, setStatusField] = useState(block.statusField || '');
+  const [statusSort, setStatusSort] = useState(block.statusSort || '');
 
   const handleCellClick = (rowId: string, columnId: string, value: any) => {
     setEditingCell({ rowId, colId: columnId });
@@ -63,7 +68,6 @@ export function WorkspaceTable({ block }: WorkspaceTableProps) {
       updatedAt: Date.now(),
     };
 
-    // Initialize cells with values from dialog
     block.columns.forEach((col) => {
       newRow.cells[col.id] = {
         value: newRowData[col.id] || '',
@@ -94,6 +98,35 @@ export function WorkspaceTable({ block }: WorkspaceTableProps) {
       await removeRow(block.id, rowId);
     }
   };
+
+  // Фільтрування рядків
+  const getFilteredRows = () => {
+    if (!searchQuery.trim()) return block.rows;
+    const query = searchQuery.toLowerCase();
+    return block.rows.filter((row) =>
+      block.columns.some((col) => {
+        const cellValue = row.cells[col.id]?.value?.toString().toLowerCase() || '';
+        return cellValue.includes(query);
+      })
+    );
+  };
+
+  const filteredRows = getFilteredRows();
+
+  // Групування рядків за статусом
+  const getGroupedRows = () => {
+    if (!statusField || !statusSort || statusSort !== 'block') return filteredRows;
+
+    const grouped: { [key: string]: typeof filteredRows } = {};
+    filteredRows.forEach((row) => {
+      const statusValue = row.cells[statusField]?.value || 'Без статусу';
+      if (!grouped[statusValue]) grouped[statusValue] = [];
+      grouped[statusValue].push(row);
+    });
+    return grouped;
+  };
+
+  const groupedRows = getGroupedRows();
 
   if (!block.columns || block.columns.length === 0) {
     return (
@@ -139,84 +172,233 @@ export function WorkspaceTable({ block }: WorkspaceTableProps) {
   }
 
   return (
-    <Box>
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-            <TableRow>
-              {block.columns.map((col) => (
-                <TableCell key={col.id} sx={{ fontWeight: 'bold' }}>
-                  {col.name}
-                  <br />
-                  <small style={{ opacity: 0.6 }}>({col.type})</small>
-                </TableCell>
-              ))}
-              <TableCell align="center" sx={{ width: 100 }}>
-                Дії
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {block.rows && block.rows.length > 0 ? (
-              block.rows.map((row) => (
-                <TableRow key={row.id} hover>
-                  {block.columns.map((col) => {
-                    const cellData = row.cells[col.id];
-                    const isEditing = editingCell?.rowId === row.id && editingCell?.colId === col.id;
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
+      {/* Пошукова панель */}
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <TextField
+          placeholder="🔍 Пошук в таблиці..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          size="small"
+          sx={{ flex: 1, maxWidth: 400 }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, opacity: 0.5 }} />,
+          }}
+        />
+        {searchQuery && (
+          <Button
+            size="small"
+            startIcon={<ClearIcon />}
+            onClick={() => setSearchQuery('')}
+            variant="outlined"
+          >
+            Очистити
+          </Button>
+        )}
+        {filteredRows.length !== block.rows.length && (
+          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+            Знайдено: {filteredRows.length} / {block.rows.length}
+          </Box>
+        )}
+      </Box>
 
-                    return (
-                      <TableCell
-                        key={col.id}
-                        onClick={() => handleCellClick(row.id, col.id, cellData)}
-                        sx={{
-                          cursor: 'pointer',
-                          padding: isEditing ? 0 : 1,
-                          '&:hover': { backgroundColor: '#fafafa' },
-                        }}
-                      >
-                        {isEditing ? (
-                          <TextField
-                            autoFocus
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={() => handleCellSave(row.id, col.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleCellSave(row.id, col.id);
-                              }
-                            }}
-                            size="small"
-                            fullWidth
-                          />
-                        ) : (
-                          cellData?.value || ''
-                        )}
+      {/* Налаштування сортування */}
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', pb: 1, borderBottom: '1px solid #eee' }}>
+        <FormControl sx={{ minWidth: 200 }} size="small">
+          <InputLabel>Сортування за статусом</InputLabel>
+          <Select
+            value={statusField}
+            onChange={(e) => setStatusField(e.target.value)}
+            label="Сортування за статусом"
+          >
+            <MenuItem value="">-- Вимкнути --</MenuItem>
+            {block.columns
+              .filter((col) => col.type === 'status' || col.type === 'department')
+              .map((col) => (
+                <MenuItem key={col.id} value={col.id}>
+                  {col.name}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+        {statusField && (
+          <FormControl sx={{ minWidth: 150 }} size="small">
+            <InputLabel>Вид сортування</InputLabel>
+            <Select value={statusSort} onChange={(e) => setStatusSort(e.target.value)} label="Вид сортування">
+              <MenuItem value="block">Блоками</MenuItem>
+              <MenuItem value="inline">Рядками</MenuItem>
+            </Select>
+          </FormControl>
+        )}
+      </Box>
+
+      {/* Таблиця з групуванням або звичайна */}
+      {statusSort === 'block' && statusField && typeof groupedRows === 'object' && !Array.isArray(groupedRows) ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {Object.entries(groupedRows).map(([statusValue, rows]: [string, any]) => (
+            <Box key={statusValue}>
+              <Box
+                sx={{
+                  p: 1.5,
+                  backgroundColor: '#f5f5f5',
+                  fontWeight: 'bold',
+                  borderBottom: '2px solid #ddd',
+                  mb: 1,
+                }}
+              >
+                {statusValue} ({rows.length})
+              </Box>
+              <TableContainer component={Paper}>
+                <Table size="small">
+                  <TableHead sx={{ backgroundColor: '#fafafa' }}>
+                    <TableRow>
+                      {block.columns.map((col) => (
+                        <TableCell key={col.id} sx={{ fontWeight: 'bold' }}>
+                          {col.name}
+                          <br />
+                          <small style={{ opacity: 0.6 }}>({col.type})</small>
+                        </TableCell>
+                      ))}
+                      <TableCell align="center" sx={{ width: 100 }}>
+                        Дії
                       </TableCell>
-                    );
-                  })}
-                  <TableCell align="center">
-                    <Tooltip title="Видалити рядок">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteRow(row.id)}
-                        color="error"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.map((row: any) => (
+                      <TableRow key={row.id} hover>
+                        {block.columns.map((col) => {
+                          const cellData = row.cells[col.id];
+                          const isEditing = editingCell?.rowId === row.id && editingCell?.colId === col.id;
+
+                          return (
+                            <TableCell
+                              key={col.id}
+                              onClick={() => handleCellClick(row.id, col.id, cellData)}
+                              sx={{
+                                cursor: 'pointer',
+                                padding: isEditing ? 0 : 1,
+                                '&:hover': { backgroundColor: '#fafafa' },
+                              }}
+                            >
+                              {isEditing ? (
+                                <TextField
+                                  autoFocus
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onBlur={() => handleCellSave(row.id, col.id)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      handleCellSave(row.id, col.id);
+                                    }
+                                  }}
+                                  size="small"
+                                  fullWidth
+                                />
+                              ) : (
+                                cellData?.value || ''
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell align="center">
+                          <Tooltip title="Видалити рядок">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDeleteRow(row.id)}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          ))}
+        </Box>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
               <TableRow>
-                <TableCell colSpan={block.columns.length + 1} align="center">
-                  Немає даних
+                {block.columns.map((col) => (
+                  <TableCell key={col.id} sx={{ fontWeight: 'bold' }}>
+                    {col.name}
+                    <br />
+                    <small style={{ opacity: 0.6 }}>({col.type})</small>
+                  </TableCell>
+                ))}
+                <TableCell align="center" sx={{ width: 100 }}>
+                  Дії
                 </TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {filteredRows && filteredRows.length > 0 ? (
+                filteredRows.map((row) => (
+                  <TableRow key={row.id} hover>
+                    {block.columns.map((col) => {
+                      const cellData = row.cells[col.id];
+                      const isEditing = editingCell?.rowId === row.id && editingCell?.colId === col.id;
+
+                      return (
+                        <TableCell
+                          key={col.id}
+                          onClick={() => handleCellClick(row.id, col.id, cellData)}
+                          sx={{
+                            cursor: 'pointer',
+                            padding: isEditing ? 0 : 1,
+                            '&:hover': { backgroundColor: '#fafafa' },
+                          }}
+                        >
+                          {isEditing ? (
+                            <TextField
+                              autoFocus
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={() => handleCellSave(row.id, col.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleCellSave(row.id, col.id);
+                                }
+                              }}
+                              size="small"
+                              fullWidth
+                            />
+                          ) : (
+                            cellData?.value || ''
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell align="center">
+                      <Tooltip title="Видалити рядок">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteRow(row.id)}
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={block.columns.length + 1} align="center">
+                    Немає даних
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
         <Button
@@ -247,7 +429,6 @@ export function WorkspaceTable({ block }: WorkspaceTableProps) {
               onChange={(e) => setNewRowData({ ...newRowData, [col.id]: e.target.value })}
               fullWidth
               margin="normal"
-              type={col.type === 'number' ? 'number' : 'text'}
             />
           ))}
         </DialogContent>

@@ -1,4 +1,4 @@
-import { Theme } from './index';
+import { Theme } from './types';
 
 export const FIELD_TYPES = [
   { value: 'text', label: 'Текст' },
